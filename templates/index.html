@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Creating Real-Time Charts with Flask</title>
+		<link
+			rel="stylesheet"
+			type="text/css"
+			href="{{ url_for('static', filename='css/epoch.min.css') }}"
+		/>
+	</head>
+	<body>
+		<title>センサーデータ</title>
+		<h1 style="font-size: 30px">端末</h1>
+		<div class="display1">
+			<div class="terminal">
+				<h1 style="margin-top: -40px; margin-left: -30px">開発ルーム</h1>
+				<h1 id="text">
+					{% for match in text %}
+					<tr style="margin-left: 10px">
+						<div class="sensor">
+							温度：
+							<div id="temperature">{{ match.temperature }}</div>
+							°C
+						</div>
+						<div class="sensor">
+							湿度：
+							<div id="huminity">{{ match.huminity }}</div>
+							%
+						</div>
+						<div class="sensor">
+							<div class="pressure">気圧：</div>
+							<div id="pressure">{{ match.pressure }}</div>
+							hPa
+						</div>
+					</tr>
+					{% endfor %}
+				</h1>
+			</div>
+			<div class="terminal1">
+				<h1 style="margin-top: -40px; margin-left: -30px">小会議室</h1>
+				<h1 id="text">
+					{% for match in text %}
+					<tr style="margin-left: 10px">
+						<div class="sensor">
+							温度：
+							<div id="temperature1">{{ match.temperature }}</div>
+							°C
+						</div>
+						<div class="sensor">
+							湿度：
+							<div id="huminity1">{{ match.huminity }}</div>
+							%
+						</div>
+						<div class="sensor">
+							<div class="pressure">気圧：</div>
+							<div id="pressure1">{{ match.pressure }}</div>
+							hPa
+						</div>
+					</tr>
+					{% endfor %}
+				</h1>
+			</div>
+		</div>
+		<h1 style="font-size: 30px">最新チャート</h1>
+		<div class="display">
+			<div class="container">
+				<div class="row">
+					<div class="col-12">
+						<div class="card">
+							<div class="card-body">
+								<canvas id="canvas"></canvas>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="container">
+				<div class="row">
+					<div class="col-12">
+						<div class="card">
+							<div class="card-body">
+								<canvas id="canvas1"></canvas>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="container">
+				<div class="row">
+					<div class="col-12">
+						<div class="card">
+							<div class="card-body">
+								<canvas id="canvas2"></canvas>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--suppress JSUnresolvedLibraryURL -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+		<!--suppress JSUnresolvedLibraryURL -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+		<!--suppress JSUnresolvedLibraryURL -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
+		<script>
+			setInterval(function () {
+				fetch("/data")
+					.then(function (response) {
+						return response.json();
+					})
+					.then(data =>
+						data.forEach(match => {
+							console.log(match);
+							document.getElementById("temperature").innerHTML = match.temperature;
+							document.getElementById("huminity").innerHTML = match.huminity;
+							document.getElementById("pressure").innerHTML = match.pressure;
+							document.getElementById("temperature1").innerHTML = match.temperature;
+							document.getElementById("huminity1").innerHTML = match.huminity;
+							document.getElementById("pressure1").innerHTML = match.pressure;
+						})
+					);
+			}, 10000);
+			$(document).ready(function () {
+				const config = {
+					type: "line",
+					data: {
+						labels: [],
+						datasets: [
+							{
+								label: "温度",
+								backgroundColor: "rgb(255, 102, 0)",
+								borderColor: "rgb(255, 102, 0)",
+								data: [],
+								fill: false,
+							},
+							{
+								label: "温度",
+								backgroundColor: "rgb(220,20,60)",
+								borderColor: "rgb(220,20,60)",
+								data: [],
+								fill: false,
+							},
+						],
+					},
+					options: {
+						responsive: true,
+						tooltips: {
+							mode: "index",
+							intersect: false,
+						},
+						scales: {
+							xAxes: [
+								{
+									display: true,
+									scaleLabel: {
+										display: true,
+										labelString: "日時",
+									},
+								},
+							],
+							// yAxes: [
+							// 	{
+							// 		display: true,
+							// 		scaleLabel: {
+							// 			display: true,
+							// 			labelString: "温度",
+							// 		},
+							// 	},
+							// ],
+						},
+					},
+				};
+				const context = document.getElementById("canvas").getContext("2d");
+				const lineChart = new Chart(context, config);
+				const source = new EventSource("/chart-data");
+
+				source.onmessage = function (event) {
+					const data = JSON.parse(event.data);
+					if (config.data.labels.length === 12) {
+						config.data.labels.shift();
+						config.data.datasets[0].data.shift();
+						config.data.datasets[1].data.shift();
+					}
+					config.data.labels.push(data.time);
+					config.data.datasets[0].data.push(data.value);
+					config.data.datasets[1].data.push(data.value2);
+					lineChart.update();as
+				};
+			});
+			$(document).ready(function () {
+				const config = {
+					type: "line",
+					data: {
+						labels: [],
+						datasets: [
+							{
+								label: "湿度",
+								backgroundColor: "rgb(51, 102, 255)",
+								borderColor: "rgb(51, 102, 255)",
+								data: [],
+								fill: false,
+							},
+							// {
+							// 	label: "湿度",
+							// 	backgroundColor: "rgb(220,20,60)",
+							// 	borderColor: "rgb(220,20,60)",
+							// 	data: [],
+							// 	fill: false,
+							// },
+						],
+					},
+					options: {
+						responsive: true,
+						tooltips: {
+							mode: "index",
+							intersect: false,
+						},
+						hover: {
+							mode: "nearest",
+							intersect: true,
+						},
+						scales: {
+							xAxes: [
+								{
+									display: true,
+									scaleLabel: {
+										display: true,
+										labelString: "日時",
+									},
+								},
+							],
+						},
+					},
+				};
+
+				const context = document.getElementById("canvas1").getContext("2d");
+				const lineChart = new Chart(context, config);
+				const source = new EventSource("/chart-data1");
+				source.onmessage = function (event) {
+					const data = JSON.parse(event.data);
+					if (config.data.labels.length === 12) {
+						config.data.labels.shift();
+						config.data.datasets[0].data.shift();
+					}
+					config.data.labels.push(data.time);
+					config.data.datasets[0].data.push(data.value);
+					// config.data.datasets[1].data.push(2343);
+					lineChart.update();
+				};
+			});
+			$(document).ready(function () {
+				const config = {
+					type: "line",
+					data: {
+						labels: [],
+						datasets: [
+							{
+								label: "気圧",
+								backgroundColor: "rgb(0, 255, 0)",
+								borderColor: "rgb(0, 255, 0)",
+								data: [],
+								fill: false,
+							},
+						],
+					},
+					options: {
+						responsive: true,
+						tooltips: {
+							mode: "index",
+							intersect: false,
+						},
+						hover: {
+							mode: "nearest",
+							intersect: true,
+						},
+						scales: {
+							xAxes: [
+								{
+									display: true,
+									scaleLabel: {
+										display: true,
+										labelString: "日時",
+									},
+								},
+							],
+						},
+					},
+				};
+
+				const context = document.getElementById("canvas2").getContext("2d");
+				const lineChart = new Chart(context, config);
+				const source = new EventSource("/chart-data2");
+				source.onmessage = function (event) {
+					const data = JSON.parse(event.data);
+					if (config.data.labels.length === 12) {
+						config.data.labels.shift();
+						config.data.datasets[0].data.shift();
+					}
+					config.data.labels.push(data.time);
+					config.data.datasets[0].data.push(data.value);
+					lineChart.update();
+				};
+			});
+		</script>
+	</body>
+</html>
