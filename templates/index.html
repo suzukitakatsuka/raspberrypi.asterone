@@ -37,7 +37,7 @@
 					{% endfor %}
 				</h1>
 			</div>
-			<div class="terminal1">
+			<!-- <div class="terminal1">
 				<h1 style="margin-top: -40px; margin-left: -30px">小会議室</h1>
 				<h1 id="text">
 					{% for match in text %}
@@ -60,7 +60,7 @@
 					</tr>
 					{% endfor %}
 				</h1>
-			</div>
+			</div> -->
 		</div>
 		<h1 style="font-size: 30px">最新チャート</h1>
 		<div class="display">
@@ -108,18 +108,21 @@
 			setInterval(function () {
 				fetch("/data")
 					.then(function (response) {
+						console.log("aaaaa",response);
 						return response.json();
 					})
 					.then(data =>
 						data.forEach(match => {
-							console.log(match);
-							document.getElementById("temperature").innerHTML = match.temperature;
+							console.log("match",match);
+							document.getElementById("temperature").innerHTML =
+								match.temperature;
 							document.getElementById("huminity").innerHTML = match.huminity;
 							document.getElementById("pressure").innerHTML = match.pressure;
-							document.getElementById("temperature1").innerHTML = match.temperature;
-							document.getElementById("huminity1").innerHTML = match.huminity;
-							document.getElementById("pressure1").innerHTML = match.pressure;
-						})
+							// document.getElementById("temperature1").innerHTML =
+							// 	match.temperature;
+							// document.getElementById("huminity1").innerHTML = match.huminity;
+							// document.getElementById("pressure1").innerHTML = match.pressure;
+						}),
 					);
 			}, 10000);
 			$(document).ready(function () {
@@ -150,13 +153,17 @@
 							mode: "index",
 							intersect: false,
 						},
+						hover: {
+							mode: "nearest",
+							intersect: true,
+						},
 						scales: {
 							xAxes: [
 								{
 									display: true,
 									scaleLabel: {
 										display: true,
-										labelString: "日時",
+										labelString: "",
 									},
 								},
 							],
@@ -172,8 +179,11 @@
 						},
 					},
 				};
+
 				const context = document.getElementById("canvas").getContext("2d");
+
 				const lineChart = new Chart(context, config);
+
 				const source = new EventSource("/chart-data");
 
 				source.onmessage = function (event) {
@@ -186,7 +196,7 @@
 					config.data.labels.push(data.time);
 					config.data.datasets[0].data.push(data.value);
 					config.data.datasets[1].data.push(data.value2);
-					lineChart.update();as
+					lineChart.update();
 				};
 			});
 			$(document).ready(function () {
@@ -236,8 +246,11 @@
 				};
 
 				const context = document.getElementById("canvas1").getContext("2d");
+
 				const lineChart = new Chart(context, config);
+
 				const source = new EventSource("/chart-data1");
+
 				source.onmessage = function (event) {
 					const data = JSON.parse(event.data);
 					if (config.data.labels.length === 12) {
@@ -290,8 +303,11 @@
 				};
 
 				const context = document.getElementById("canvas2").getContext("2d");
+
 				const lineChart = new Chart(context, config);
+
 				const source = new EventSource("/chart-data2");
+
 				source.onmessage = function (event) {
 					const data = JSON.parse(event.data);
 					if (config.data.labels.length === 12) {
